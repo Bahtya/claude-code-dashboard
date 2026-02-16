@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Session files (not part of the project)
+session.html
+session.md
+session_files/
+
+# MCP config (local only)
+.mcp.json

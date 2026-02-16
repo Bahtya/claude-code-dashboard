@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="url(#grad1)" stroke-width="2" fill="none"/>
+          <circle cx="16" cy="16" r="6" fill="url(#grad1)" opacity="0.8"/>
+          <circle cx="16" cy="16" r="10" stroke="url(#grad1)" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="3 3">
+            <animateTransform attributeName="transform" type="rotate" from="0 16 16" to="360 16 16" dur="10s" repeatCount="indefinite"/>
+          </circle>
+          <defs>
+            <linearGradient id="grad1" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#00f0ff"/>
+              <stop offset="100%" stop-color="#b026ff"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <h1>Claude Code <span class="accent">Dashboard</span></h1>
+      </div>
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        <span>LIVE</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-stat">
+        <span class="stat-label">Sessions</span>
+        <span class="stat-value" id="header-sessions">-</span>
+      </div>
+      <div class="header-stat">
+        <span class="stat-label">Messages</span>
+        <span class="stat-value" id="header-messages">-</span>
+      </div>
+      <div class="header-stat">
+        <span class="stat-label">Agents</span>
+        <span class="stat-value" id="header-agents">-</span>
+      </div>
+      <div class="connection-status" id="connection-status">
+        <span class="conn-dot"></span>
+        <span id="conn-text">Connecting...</span>
+      </div>
+      <!-- Theme Selector -->
+      <div class="theme-selector" id="theme-selector" onclick="toggleThemeDropdown()">
+        <div class="theme-icon cyberpunk-icon" id="current-theme-icon">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 1L7.5 4H11L8.5 6L9.5 9L6 7L2.5 9L3.5 6L1 4H4.5L6 1Z"/></svg>
+        </div>
+        <span class="theme-label" id="theme-label">Theme</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="opacity:0.6"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        <div class="theme-dropdown" id="theme-dropdown">
+          <div class="theme-option selected" data-theme="cyberpunk" onclick="setTheme('cyberpunk', event)">
+            <div class="theme-option-icon cyberpunk-icon">
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor"><path d="M6 1L7.5 4H11L8.5 6L9.5 9L6 7L2.5 9L3.5 6L1 4H4.5L6 1Z"/></svg>
+            </div>
+            <div>
+              <div class="theme-option-name">Cyberpunk</div>
+              <div class="theme-option-desc">Dark neon aesthetic</div>
+            </div>
+          </div>
+          <div class="theme-option" data-theme="moltbook" onclick="setTheme('moltbook', event)">
+            <div class="theme-option-icon moltbook-icon">
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2L7 5H10L7.5 7L8.5 10L6 8L3.5 10L4.5 7L2 5H5L6 2Z"/></svg>
+            </div>
+            <div>
+              <div class="theme-option-name">Moltbook</div>
+              <div class="theme-option-desc">Warm modern style</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="dashboard-layout">
+    <!-- Top Stats Bar -->
+    <section class="card card-stats">
+      <div class="card-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <h2>Statistics</h2>
+      </div>
+      <div class="stats-grid" id="stats-grid"></div>
+    </section>
+
+    <!-- Two-Column Body -->
+    <div class="main-body">
+      <!-- Left: Explorer Tree -->
+      <section class="card card-explorer">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <h2>Explorer</h2>
+          <span class="breadcrumb" id="breadcrumb"></span>
+        </div>
+        <div class="explorer-tree" id="explorer-tree"></div>
+      </section>
+
+      <!-- Right: Chat Panel -->
+      <section class="card card-chat">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h2>Chat Messages</h2>
+          <span class="chat-session-label" id="chat-session-label">Select a session</span>
+        </div>
+        <div class="chat-container" id="chat-container">
+          <div class="chat-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <p>Click a session or agent in the explorer to view messages</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bottom-row">
+      <!-- Command History -->
+      <section class="card card-history">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <h2>Command History</h2>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+
+      <!-- Todos -->
+      <section class="card card-todos">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <h2>Todos</h2>
+        </div>
+        <div class="todo-list" id="todo-list"></div>
+      </section>
+
+      <!-- Activity Timeline -->
+      <section class="card card-timeline">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          <h2>Activity Timeline</h2>
+        </div>
+        <div class="timeline-chart" id="timeline-chart"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

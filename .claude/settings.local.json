@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python3 -m json.tool:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)",
+      "Bash(npm install)",
+      "Bash(curl:*)",
+      "Bash(start http://localhost:3200)",
+      "Bash(ls:*)",
+      "Bash(netstat:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(unset:*)",
+      "Bash(CLAUDE_CODE_GIT_BASH_PATH=\"C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe\" claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest)",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__evaluate_script",
+      "Bash(powershell.exe -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CommandLine | Format-List\")",
+      "Bash(powershell.exe -Command \"Get-NetTCPConnection -LocalPort 3200 -ErrorAction SilentlyContinue | Select-Object OwningProcess\")",
+      "mcp__web-reader__webReader",
+      "Bash(findstr :3200)",
+      "Bash(npx skills add:*)",
+      "Bash(npx -y skills add:*)",
+      "Bash(npx:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd //c \"taskkill /PID 10600 /F\")",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(npm start)",
+      "Bash(npm install:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
