@@ -45,6 +45,50 @@ Dashboard 从以下位置读取 Claude Code 会话数据：
 
 服务器使用 Chokidar 监听文件变化，并通过 WebSocket 向所有连接的客户端广播更新。
 
+### Claude Code Agent Teams 通信机制
+
+> 参考资料来源：[Jerome.Y. (@alterxyz4)](https://x.com/alterxyz4/status/2021892207574405386)
+
+Claude Code 的 Agent Teams 功能使用极其朴素的文件系统作为消息队列，没有使用任何消息中间件、数据库或网络通信。
+
+**三大核心原语：**
+
+1. **文件系统消息队列** — 每个 agent 有一个 inbox JSON 文件
+2. **AsyncLocalStorage** — Node.js 原生的异步上下文隔离
+3. **共享任务列表** — 每个任务一个 JSON 文件
+
+**目录结构：**
+```
+~/.claude/
+├── teams/[团队名]/
+│   ├── config.json          # 团队配置和成员列表
+│   └── inboxes/
+│       ├── team-lead.json   # lead 的收件箱
+│       └── observer.json    # teammate 的收件箱
+└── tasks/[团队名]/
+    └── 1.json               # 任务文件
+```
+
+**消息投递机制：**
+- 消息只能在 conversation turn 之间投递（非实时）
+- teammate 消息被注入为 user message
+- 协议消息（如空闲通知、关闭请求）序列化为 JSON 字符串存入 text 字段
+- inbox 文件按需创建，每条消息追加到 JSON 数组末尾
+
+**两种运行模式：**
+| 模式 | 说明 |
+|------|------|
+| in-process | 主进程内，AsyncLocalStorage 隔离上下文 |
+| tmux | 独立 tmux pane，完全独立进程 |
+
+**已知限制：**
+- 没有实时性（消息只能在 turn 间投递）
+- 没有同步等待（不能 `await teammate.confirm()`）
+- Context compaction 会杀死团队感知
+- 多个 teammate 同时写 MEMORY.md 会互相覆盖
+
+详细文档见：[docs/claude-code-agent-communication.md](docs/claude-code-agent-communication.md)
+
 ## 架构
 
 **后端：**
