@@ -1,118 +1,181 @@
 # Claude Code Dashboard
 
-Claude Code 会话数据的实时 Web Dashboard，用于检查存储在 `~/.claude/` 中的会话数据。它读取 JSONL 会话文件、JSON 配置文件和历史记录，显示项目、会话、子代理对话、待办事项、命令历史和活动时间线。
+A real-time web dashboard for inspecting Claude Code session data stored in `~/.claude/`. It reads JSONL session files, JSON config files, and history to display projects, sessions, subagent conversations, todos, command history, and activity timeline.
 
-![Claude Code Dashboard](public/screenshots/theme-dropdown.png)
+## Screenshots
 
-## 功能特性
+### Cyberpunk Theme (Default)
 
-- **实时更新**：基于 WebSocket 的实时数据同步与自动刷新
-- **会话浏览器**：浏览项目、会话和子代理对话
-- **聊天消息**：查看包含工具调用的完整对话历史
-- **活动时间线**：每日消息活动的可视化图表
-- **待办事项追踪**：查看和管理 Claude Code 的待办事项
-- **命令历史**：最近的命令历史记录
-- **统计概览**：会话数、消息数和代理数的总览
+![Cyberpunk Theme](public/screenshots/cyberpunk-theme.png)
 
-## 安装
+Dark neon aesthetics with glassmorphism effects and animated particle background.
+
+### Moltbook Theme
+
+![Moltbook Theme](public/screenshots/moltbook-theme.png)
+
+Warm and modern design with coral and teal accents, inspired by [moltbook.com](https://www.moltbook.com/).
+
+## Features
+
+- **Dual Theme System**
+  - Cyberpunk (Dark Neon) - Default dark theme with cyan and magenta accents
+  - Moltbook (Warm Modern) - Light theme inspired by [moltbook.com](https://www.moltbook.com/)
+
+- **Real-time Updates**
+  - WebSocket-based live data synchronization
+  - Auto-refresh chat when session files change
+
+- **Session Explorer**
+  - Browse all projects and sessions
+  - View subagent conversations
+  - Track activity timeline
+
+- **Activity Tracking**
+  - Statistics overview (projects, sessions, messages, agents)
+  - Visual activity chart
+  - Todo status monitoring
+  - Command history display
+
+## Installation
 
 ```bash
-# 克隆仓库
+# Clone the repository
 git clone git@github.com:Bahtya/claude-code-dashboard.git
 cd claude-code-dashboard
 
-# 安装依赖
+# Install dependencies
 npm install
 ```
 
-## 使用
+## Usage
 
 ```bash
-# 启动服务器
+# Start the server
 npm start
+
+# Or use the Windows launcher
+启动Dashboard.bat
 ```
 
-在浏览器中访问 `http://localhost:3200/`
+Visit [http://localhost:3200](http://localhost:3200) in your browser.
 
-## 工作原理
+Use the theme selector in the header to switch between Cyberpunk and Moltbook themes.
 
-Dashboard 从以下位置读取 Claude Code 会话数据：
-- `~/.claude/projects/*/**.jsonl` - 会话消息
-- `~/.claude/stats-cache.json` - 缓存的统计数据
-- `~/.claude/history.jsonl` - 命令历史
-- `~/.claude/todos/*.json` - 待办事项
-- `~/.claude/settings.json` - 用户设置
+## Desktop Application
 
-服务器使用 Chokidar 监听文件变化，并通过 WebSocket 向所有连接的客户端广播更新。
+The dashboard can also be packaged as a desktop application using Electron:
 
-### Claude Code Agent Teams 通信机制
+```bash
+# Install Electron (may require VPN/proxy in China)
+npm install electron electron-builder
 
-> 参考资料来源：[Jerome.Y. (@alterxyz4)](https://x.com/alterxyz4/status/2021892207574405386)
+# Run in development mode
+npm run electron-dev
 
-Claude Code 的 Agent Teams 功能使用极其朴素的文件系统作为消息队列，没有使用任何消息中间件、数据库或网络通信。
+# Build Windows installer
+npm run dist
+```
 
-**三大核心原语：**
+## How It Works
 
-1. **文件系统消息队列** — 每个 agent 有一个 inbox JSON 文件
-2. **AsyncLocalStorage** — Node.js 原生的异步上下文隔离
-3. **共享任务列表** — 每个任务一个 JSON 文件
+The dashboard reads Claude Code session data from:
+- `~/.claude/projects/*/**.jsonl` - Session messages
+- `~/.claude/stats-cache.json` - Cached statistics
+- `~/.claude/history.jsonl` - Command history
+- `~/.claude/todos/*.json` - Todos
+- `~/.claude/settings.json` - User settings
 
-**目录结构：**
+The server uses Chokidar to watch for file changes and broadcasts updates to all connected clients via WebSocket.
+
+### Claude Code Agent Teams Communication Mechanism
+
+> Source: [Jerome.Y. (@alterxyz4)](https://x.com/alterxyz4/status/2021892207574405386)
+
+Claude Code's Agent Teams feature uses an extremely simple file system as a message queue, without any message middleware, database, or network communication.
+
+**Three Core Primitives:**
+
+1. **File System Message Queue** — Each agent has an inbox JSON file
+2. **AsyncLocalStorage** — Node.js native async context isolation
+3. **Shared Task List** — One JSON file per task
+
+**Directory Structure:**
 ```
 ~/.claude/
-├── teams/[团队名]/
-│   ├── config.json          # 团队配置和成员列表
+├── teams/[team-name]/
+│   ├── config.json          # Team config and member list
 │   └── inboxes/
-│       ├── team-lead.json   # lead 的收件箱
-│       └── observer.json    # teammate 的收件箱
-└── tasks/[团队名]/
-    └── 1.json               # 任务文件
+│       ├── team-lead.json   # Lead's inbox
+│       └── observer.json    # Teammate's inbox
+└── tasks/[team-name]/
+    └── 1.json               # Task file
 ```
 
-**消息投递机制：**
-- 消息只能在 conversation turn 之间投递（非实时）
-- teammate 消息被注入为 user message
-- 协议消息（如空闲通知、关闭请求）序列化为 JSON 字符串存入 text 字段
-- inbox 文件按需创建，每条消息追加到 JSON 数组末尾
+**Message Delivery:**
+- Messages can only be delivered between conversation turns (not real-time)
+- Teammate messages are injected as user messages
+- Protocol messages (idle notifications, close requests) are serialized as JSON strings in the text field
+- Inbox files are created on demand, each message appended to the end of the JSON array
 
-**两种运行模式：**
-| 模式 | 说明 |
-|------|------|
-| in-process | 主进程内，AsyncLocalStorage 隔离上下文 |
-| tmux | 独立 tmux pane，完全独立进程 |
+**Two Running Modes:**
+| Mode | Description |
+|------|-------------|
+| in-process | Within main process, AsyncLocalStorage isolates context |
+| tmux | Independent tmux pane, completely separate process |
 
-**已知限制：**
-- 没有实时性（消息只能在 turn 间投递）
-- 没有同步等待（不能 `await teammate.confirm()`）
-- Context compaction 会杀死团队感知
-- 多个 teammate 同时写 MEMORY.md 会互相覆盖
+**Known Limitations:**
+- No real-time capability (messages can only be delivered between turns)
+- No synchronous waiting (cannot `await teammate.confirm()`)
+- Context compaction kills team awareness
+- Multiple teammates writing MEMORY.md simultaneously will overwrite each other
 
-详细文档见：[docs/claude-code-agent-communication.md](docs/claude-code-agent-communication.md)
+See: [docs/claude-code-agent-communication.md](docs/claude-code-agent-communication.md) for details.
 
-## 架构
+## Architecture
 
-**后端：**
-- Express 服务器 + WebSocket (ws)
-- 文件监控器 (chokidar) 实现实时更新
-- API 路由用于数据检索
+**Backend:**
+- Express server + WebSocket (ws)
+- File watcher (chokidar) for real-time updates
+- API routes for data retrieval
 
-**前端：**
-- 原生 JavaScript（无框架）
-- 玻璃拟态/赛博朋克 CSS 设计
-- WebSocket 客户端实现实时更新
-- Canvas 粒子动画背景
+**Frontend:**
+- Vanilla JavaScript (no framework)
+- Glassmorphism/Cyberpunk CSS design
+- WebSocket client for real-time updates
+- Canvas particle animation background
 
-**API 路由：**
-- `GET /api/dashboard` - 完整的聚合 Dashboard 数据
-- `GET /api/messages/:projectDir/:sessionId` - 会话消息
-- `GET /api/subagent-messages/:projectDir/:sessionId/:agentId` - 子代理消息
+**API Routes:**
+- `GET /api/dashboard` - Full aggregated dashboard data
+- `GET /api/messages/:projectDir/:sessionId` - Session messages
+- `GET /api/subagent-messages/:projectDir/:sessionId/:agentId` - Subagent messages
 
-## 技术栈
+## Tech Stack
 
-- **后端：** Node.js + Express + WebSocket (ws) + Chokidar
-- **前端：** 原生 JavaScript + CSS3
-- **数据源：** 读取 `~/.claude/` 目录
+- **Backend:** Node.js + Express + WebSocket (ws) + Chokidar
+- **Frontend:** Vanilla JavaScript + CSS3
+- **Data Source:** Reads from `~/.claude/` directory
 
-## 许可证
+## Project Structure
+
+```
+dashboard/
+├── server.js           # Express + WebSocket server
+├── public/
+│   ├── index.html      # Main HTML
+│   ├── css/style.css   # Dual theme styles
+│   └── js/app.js       # Frontend logic
+├── electron/           # Desktop app packaging
+│   ├── main.js
+│   └── preload.js
+├── assets/             # Icons and images
+└── package.json
+```
+
+## License
 
 MIT
+
+---
+
+Built with :heart: for the Claude Code community

@@ -28,3 +28,7 @@ session_files/
 
 # MCP config (local only)
 .mcp.json
+
+# Electron build output
+dist/
+*.exe
